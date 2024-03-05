@@ -4,15 +4,18 @@ class Program
 {
     static void Main(string[] args)
     {
-        // Prompt the user to enter their name
-        Console.Write("Enter your name: ");
-        string name = Console.ReadLine();
+        // Variables
+        int age;
+        string name;
 
-        // Prompt the user to enter their age
-        Console.Write("Enter your age: ");
-        int age = Convert.ToInt32(Console.ReadLine());
+        // Input
+        Console.WriteLine("Enter your name:");
+        name = Console.ReadLine();
 
-        // Display a message including the user's name and age
+        Console.WriteLine("Enter your age:");
+        age = Convert.ToInt32(Console.ReadLine());
+
+        // Output
         Console.WriteLine("Hello, " + name + "! You are " + age + " years old.");
     }
 }
