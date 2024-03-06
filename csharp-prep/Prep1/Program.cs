@@ -1,9 +1,21 @@
 using System;
 
-class Program
+namespace Prep1
 {
-    static void Main(string[] args)
+    class Program
     {
-        Console.WriteLine("Hello Prep1 World!");
+        static void Main(string[] args)
+        {
+            // Prompt user for first name
+            Console.Write("What is your first name? ");
+            string firstName = Console.ReadLine();
+
+            // Prompt user for last name
+            Console.Write("What is your last name? ");
+            string lastName = Console.ReadLine();
+
+            // Display the formatted name
+            Console.WriteLine($"Your name is {lastName}, {firstName} {lastName}.");
+        }
     }
 }
