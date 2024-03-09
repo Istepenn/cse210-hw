@@ -1,4 +1,5 @@
 using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -9,10 +10,10 @@ namespace JournalProgram
     {
         public string Prompt { get; set; }
         public string Response { get; set; }
-        public string Date { get; set; }
+        public DateTime Date { get; set; }
 
         // Constructor to initialize a journal entry with prompt, response, and date
-        public JournalEntry(string prompt, string response, string date)
+        public JournalEntry(string prompt, string response, DateTime date)
         {
             Prompt = prompt;
             Response = response;
@@ -61,11 +62,11 @@ namespace JournalProgram
             Console.Write("Enter your response: ");
             string response = Console.ReadLine();
 
-            // Get current date
-            string date = DateTime.Now.ToString("yyyy-MM-dd");
+            // Get current date and time
+            DateTime currentDate = DateTime.Now;
 
             // Create a new journal entry
-            JournalEntry entry = new JournalEntry(prompt, response, date);
+            JournalEntry entry = new JournalEntry(prompt, response, currentDate);
 
             // Add the entry to the list of entries
             entries.Add(entry);
@@ -105,9 +106,9 @@ namespace JournalProgram
                 while ((line = reader.ReadLine()) != null)
                 {
                     string[] parts = line.Split('|');
-                    if (parts.Length == 3)
+                    if (parts.Length == 3 && DateTime.TryParse(parts[0], out DateTime date))
                     {
-                        entries.Add(new JournalEntry(parts[1], parts[2], parts[0]));
+                        entries.Add(new JournalEntry(parts[1], parts[2], date));
                     }
                 }
             }
@@ -132,7 +133,12 @@ namespace JournalProgram
                 Console.WriteLine("5. Exit");
 
                 Console.Write("Enter your choice: ");
-                int choice = int.Parse(Console.ReadLine());
+                int choice;
+                if (!int.TryParse(Console.ReadLine(), out choice))
+                {
+                    Console.WriteLine("Invalid choice. Please enter a number.");
+                    continue;
+                }
 
                 switch (choice)
                 {
