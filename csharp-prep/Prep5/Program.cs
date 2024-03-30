@@ -1,45 +1,78 @@
 using System;
+using System.Collections.Generic;
 
-namespace Prep5
+public abstract class Shape
 {
-    class Program
+    public string Color { get; }
+
+    public Shape(string color)
     {
-        static void Main(string[] args)
-        {
-            DisplayWelcome();
-            
-            string userName = PromptUserName();
-            int userNumber = PromptUserNumber();
-            int squaredNumber = SquareNumber(userNumber);
+        Color = color;
+    }
 
-            DisplayResult(userName, squaredNumber);
-        }
+    public abstract float GetArea();
+}
 
-        static void DisplayWelcome()
-        {
-            Console.WriteLine("Welcome to the program!");
-        }
+public class Square : Shape
+{
+    private readonly float _side;
 
-        static string PromptUserName()
-        {
-            Console.Write("Please enter your name: ");
-            return Console.ReadLine();
-        }
+    public Square(string color, float side) : base(color)
+    {
+        _side = side;
+    }
 
-        static int PromptUserNumber()
-        {
-            Console.Write("Please enter your favorite number: ");
-            return int.Parse(Console.ReadLine());
-        }
+    public override float GetArea()
+    {
+        return _side * _side;
+    }
+}
 
-        static int SquareNumber(int number)
-        {
-            return number * number;
-        }
+public class Rectangle : Shape
+{
+    private readonly float _length;
+    private readonly float _width;
 
-        static void DisplayResult(string userName, int squaredNumber)
+    public Rectangle(string color, float length, float width) : base(color)
+    {
+        _length = length;
+        _width = width;
+    }
+
+    public override float GetArea()
+    {
+        return _length * _width;
+    }
+}
+
+public class Circle : Shape
+{
+    private readonly float _radius;
+
+    public Circle(string color, float radius) : base(color)
+    {
+        _radius = radius;
+    }
+
+    public override float GetArea()
+    {
+        return (float)Math.PI * _radius * _radius;
+    }
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        List<Shape> shapes = new List<Shape>();
+
+        shapes.Add(new Square("Red", 5));
+        shapes.Add(new Rectangle("Blue", 4, 6));
+        shapes.Add(new Circle("Green", 3));
+
+        foreach (Shape shape in shapes)
         {
-            Console.WriteLine($"{userName}, the square of your number is {squaredNumber}");
+            Console.WriteLine($"Color: {shape.Color}, Area: {shape.GetArea()}");
         }
     }
 }
