@@ -1,0 +1,4 @@
+SimpleGoal,Run a marathon,True
+EternalGoal,Read scriptures daily,False
+ChecklistGoal,Attend the temple,False
+10,50,500,0

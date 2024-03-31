@@ -2,356 +2,231 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace EternalQuest
+// Define the base class Goal
+public abstract class Goal
 {
-    abstract class Goal
+    public string Description { get; set; }
+    public bool Completed { get; set; }
+
+    public Goal(string description)
     {
-        public string Description { get; }
-        public bool Completed { get; protected set; }
-
-        public Goal(string description)
-        {
-            Description = description;
-            Completed = false;
-        }
-
-        public abstract int CalculatePoints();
-        public abstract string GetProgress();
+        Description = description;
+        Completed = false;
     }
 
-    class SimpleGoal : Goal
+    // Abstract method to calculate points for completing the goal
+    public abstract int CalculatePoints();
+
+    // Abstract method to display the progress of the goal
+    public abstract string GetProgress();
+}
+
+// Define derived class SimpleGoal
+public class SimpleGoal : Goal
+{
+    public int Value { get; set; }
+
+    public SimpleGoal(string description, int value) : base(description)
     {
-        private int Points { get; }
+        Value = value;
+    }
 
-        public SimpleGoal(string description, int points) : base(description)
-        {
-            Points = points;
-        }
+    public override int CalculatePoints()
+    {
+        return Value;
+    }
 
-        public override int CalculatePoints()
-        {
-            return Completed ? Points : 0;
-        }
+    public override string GetProgress()
+    {
+        return Completed ? "[X] Completed" : "[ ] Not Completed";
+    }
+}
 
-        public override string GetProgress()
+// Define derived class EternalGoal
+public class EternalGoal : Goal
+{
+    public int Value { get; set; }
+
+    public EternalGoal(string description, int value) : base(description)
+    {
+        Value = value;
+    }
+
+    public override int CalculatePoints()
+    {
+        return Value;
+    }
+
+    public override string GetProgress()
+    {
+        return "[Eternal Goal]";
+    }
+}
+
+// Define derived class ChecklistGoal
+public class ChecklistGoal : Goal
+{
+    public int TargetCount { get; set; }
+    public int PointsPerCompletion { get; set; }
+    public int BonusPoints { get; set; }
+    public int CompletionCount { get; set; }
+
+    public ChecklistGoal(string description, int targetCount, int pointsPerCompletion, int bonusPoints) : base(description)
+    {
+        TargetCount = targetCount;
+        PointsPerCompletion = pointsPerCompletion;
+        BonusPoints = bonusPoints;
+        CompletionCount = 0;
+    }
+
+    public void RecordCompletion()
+    {
+        CompletionCount++;
+        if (CompletionCount == TargetCount)
         {
-            return Completed ? "[X] Completed" : "[ ] Incomplete";
+            // Award bonus points on completion
         }
     }
 
-    class EternalGoal : Goal
+    public override int CalculatePoints()
     {
-        private int Points { get; }
-
-        public EternalGoal(string description, int points) : base(description)
-        {
-            Points = points;
-        }
-
-        public override int CalculatePoints()
-        {
-            return Completed ? Points : 0;
-        }
-
-        public override string GetProgress()
-        {
-            return "[Eternal]";
-        }
+        return CompletionCount * PointsPerCompletion + (Completed ? BonusPoints : 0);
     }
 
-    class ChecklistGoal : Goal
+    public override string GetProgress()
     {
-        private int TargetCount { get; }
-        private int PointsPerCompletion { get; }
-        private int BonusPoints { get; }
-        private int CompletionCount { get; set; }
+        return $"Completed {CompletionCount}/{TargetCount} times";
+    }
+}
 
-        public ChecklistGoal(string description, int targetCount, int pointsPerCompletion, int bonusPoints) : base(description)
-        {
-            TargetCount = targetCount;
-            PointsPerCompletion = pointsPerCompletion;
-            BonusPoints = bonusPoints;
-            CompletionCount = 0;
-        }
+// Define the EternalQuestProgram class
+public class EternalQuestProgram
+{
+    private List<Goal> Goals;
 
-        public override int CalculatePoints()
-        {
-            int totalPoints = Completed ? BonusPoints : 0;
-            totalPoints += CompletionCount * PointsPerCompletion;
-            return totalPoints;
-        }
+    public EternalQuestProgram()
+    {
+        Goals = new List<Goal>();
+    }
 
-        public override string GetProgress()
-        {
-            return Completed ? $"[X] Completed ({CompletionCount}/{TargetCount})" : $"[ ] Incomplete ({CompletionCount}/{TargetCount})";
-        }
+    // Method to add a new goal
+    public void AddGoal(Goal goal)
+    {
+        Goals.Add(goal);
+    }
 
-        public void RecordCompletion()
+    // Method to record completion of a goal by index
+    public void RecordGoalCompletion(int index)
+    {
+        if (index >= 0 && index < Goals.Count)
         {
-            CompletionCount++;
-            if (CompletionCount >= TargetCount)
+            Goals[index].Completed = true;
+            if (Goals[index] is ChecklistGoal checklistGoal)
             {
-                Completed = true;
+                checklistGoal.RecordCompletion();
             }
+            Console.WriteLine("Progress recorded successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Invalid goal index.");
         }
     }
 
-    class GoalManager
+    // Method to display all goals
+    public void DisplayGoals()
     {
-        public List<Goal> Goals { get; }
-
-        public GoalManager()
+        Console.WriteLine("\nCurrent Goals:");
+        for (int i = 0; i < Goals.Count; i++)
         {
-            Goals = new List<Goal>();
+            Console.WriteLine($"{i + 1}. {Goals[i].Description} - Points: {Goals[i].CalculatePoints()} - {Goals[i].GetProgress()}");
         }
+    }
 
-        public void AddGoal(Goal goal)
+    // Method to save goals to a file
+    public void SaveGoalsToFile(string fileName)
+    {
+        using (StreamWriter writer = new StreamWriter(fileName))
         {
-            Goals.Add(goal);
-        }
-
-        public void RecordProgress(int index)
-        {
-            if (index >= 0 && index < Goals.Count)
+            foreach (Goal goal in Goals)
             {
-                Goals [index].Completed = true ;
-                if (Goals[index] is ChecklistGoal checklistGoal)
+                writer.WriteLine($"{goal.GetType().Name},{goal.Description},{goal.Completed}");
+                if (goal is ChecklistGoal checklistGoal)
                 {
-                    checklistGoal.RecordCompletion();
-                }
-                Console.WriteLine("Progress recorded successfully.");
-            }
-            else
-            {
-                Console.WriteLine("Invalid goal index.");
-            }
-        }
-
-        public void DisplayGoals()
-        {
-            Console.WriteLine("\nCurrent Goals:");
-            for (int i = 0; i < Goals.Count; i++)
-            {
-                Console.WriteLine($"{i + 1}. {Goals[i].Description} - Points: {Goals[i].CalculatePoints()} - {Goals[i].GetProgress()}");
-            }
-        }
-
-        public void SaveGoalsToFile(string fileName)
-        {
-            using (StreamWriter writer = new StreamWriter(fileName))
-            {
-                foreach (Goal goal in Goals)
-                {
-                    writer.WriteLine($"{goal.GetType().Name},{goal.Description},{goal.Completed}");
-                    if (goal is ChecklistGoal checklistGoal)
-                    {
-                        writer.WriteLine($"{checklistGoal.TargeCount},{checklistGoal.PointsPerCompletion},{checklistGoal.BonusPoints},{checklistGoal.CompletionCount}");
-                    }
-                }
-            }
-        }
-
-        public void LoadGoalsFromFile(string fileName)
-        {
-            Goals.Clear();
-            using (StreamReader reader = new StreamReader(fileName))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    string[] parts = line.Split(',');
-                    if (parts.Length < 3)
-                    {
-                        Console.WriteLine("Invalid format in file.");
-                        return;
-                    }
-                    string type = parts[0];
-                    string description = parts[1];
-                    bool completed = bool.Parse(parts[2]);
-
-                    switch (type)
-                    {
-                        case nameof(SimpleGoal):
-                            Goals.Add(new SimpleGoal(description, 0) { Completed = completed });
-                            break;
-                        case nameof (EternalGoal):
-                            Goals.Add (new EternalGoal(description, 0) { Completed = completed }
-                            break;
-                        case nameof(ChecklistGoal):
-                            if (parts.Length < 7)
-                            {
-                                Console.WriteLine("Invalid format in file.");
-                                return;
-                            }
-                            int targetCount = int.Parse(parts[3]);
-                            int pointsPerCompletion = int.Parse(parts[4]);
-                            int bonusPoints = int.Parse(parts[5]);
-                            int completionCount = int.Parse(parts[6]);
-                            ChecklistGoal newChecklistGoal = new ChecklistGoal(description, targetCount, pointsPerCompletion, bonusPoints)
-                            {
-                                Completed = completed,
-                                CompletionCount = completionCount
-                            };
-                            Goals.Add(newChecklistGoal);
-                            break;
-                        default:
-                            Console.WriteLine("Unknown goal type in file.");
-                            break;
-                    }
+                    writer.WriteLine($"{checklistGoal.TargetCount},{checklistGoal.PointsPerCompletion},{checklistGoal.BonusPoints},{checklistGoal.CompletionCount}");
                 }
             }
         }
     }
 
-    class Program
+    // Method to load goals from a file
+    public void LoadGoalsFromFile(string fileName)
     {
-        static void Main(string[] args)
+        Goals.Clear();
+        using (StreamReader reader = new StreamReader(fileName))
         {
-            GoalManager goalManager = new GoalManager();
-            bool running = true;
-
-            while (running)
+            string line;
+            while ((line = reader.ReadLine()) != null)
             {
-                DisplayMenu();
-                string choice = Console.ReadLine();
+                string[] parts = line.Split(',');
+                string type = parts[0];
+                string description = parts[1];
+                bool completed = bool.Parse(parts[2]);
 
-                switch (choice)
+                switch (type)
                 {
-                    case "1":
-                        goalManager.DisplayGoals();
+                    case nameof(SimpleGoal):
+                        Goals.Add(new SimpleGoal(description, 0) { Completed = completed });
                         break;
-                    case "2":
-                        AddGoal(goalManager);
+                    case nameof(EternalGoal):
+                        Goals.Add(new EternalGoal(description, 0) { Completed = completed });
                         break;
-                    case "3":
-                        RecordProgress(goalManager);
-                        break;
-                    case "4":
-                        SaveGoals(goalManager);
-                        break;
-                    case "5":
-                        LoadGoals(goalManager);
-                        break;
-                    case "6":
-                        running = false;
-                        break;
-                    default:
-                        Console.WriteLine("Invalid choice. Please try again.");
-                        break;
-                }
-            }
-        }
-
-        private static void DisplayMenu()
-        {
-            Console.WriteLine("\nEternal Quest - Main Menu");
-            Console.WriteLine("1. View Goals");
-            Console.WriteLine("2. Add Goal");
-            Console.WriteLine("3. Record Progress");
-            Console.WriteLine("4. Save Goals");
-            Console.WriteLine("5. Load Goals");
-            Console.WriteLine("6. Quit");
-            Console.Write("Enter your choice: ");
-        }
-
-        private static void AddGoal(GoalManager goalManager)
-        {
-            Console.WriteLine("\nAdd New Goal:");
-            Console.WriteLine("1. Simple Goal");
-            Console.WriteLine("2. Eternal Goal");
-            Console.WriteLine("3. Checklist Goal");
-            Console.Write("Enter goal type: ");
-            string goalType = Console.ReadLine();
-
-            Console.Write("Enter description for the goal: ");
-            string description = Console.ReadLine();
-
-            switch (goalType)
-            {
-                case "1":
-                    Console.Write("Enter points for completing the simple goal: ");
-                    if (int.TryParse(Console.ReadLine(), out int points))
-                    {
-                        goalManager.AddGoal(new SimpleGoal(description, points));
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid input for points. Goal not added.");
-                    }
-                    break;
-                case "2":
-                    Console.Write("Enter points for completing the eternal goal: ");
-                    if (int.TryParse(Console.ReadLine(), out int eternalPoints))
-                    {
-                        goalManager.AddGoal(new EternalGoal(description, eternalPoints));
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid input for points. Goal not added.");
-                    }
-                    break;
-                case "3":
-                    Console.Write("Enter target count for the checklist goal: ");
-                    if (int.TryParse(Console.ReadLine(), out int targetCount))
-                    {
-                        Console.Write("Enter points per completion for the checklist goal: ");
-                        if (int.TryParse(Console.ReadLine(), out int pointsPerCompletion))
+                    case nameof(ChecklistGoal):
+                        int targetCount = int.Parse(parts[3]);
+                        int pointsPerCompletion = int.Parse(parts[4]);
+                        int bonusPoints = int.Parse(parts[5]);
+                        int completionCount = int.Parse(parts[6]);
+                        ChecklistGoal newChecklistGoal = new ChecklistGoal(description, targetCount, pointsPerCompletion, bonusPoints)
                         {
-                            Console.Write("Enter bonus points for completing all items in the checklist: ");
-                            if (int.TryParse(Console.ReadLine(), out int bonusPoints))
-                            {
-                                goalManager.AddGoal(new ChecklistGoal(description, targetCount, pointsPerCompletion, bonusPoints));
-                            }
-                            else
-                            {
-                                Console.WriteLine("Invalid input for bonus points. Goal not added.");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid input for points per completion. Goal not added.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid input for target count. Goal not added.");
-                    }
-                    break;
-                default:
-                    Console.WriteLine("Invalid goal type. Goal not added.");
-                    break;
+                            Completed = completed,
+                            CompletionCount = completionCount
+                        };
+                        Goals.Add(newChecklistGoal);
+                        break;
+                }
             }
         }
+    }
+}
 
-        private static void RecordProgress(GoalManager goalManager)
-        {
-            Console.WriteLine("\nRecord Progress - Choose a Goal:");
-            goalManager.DisplayGoals();
-            Console.Write("Enter the index of the goal to record progress: ");
-            if (int.TryParse(Console.ReadLine(), out int index))
-            {
-                goalManager.RecordProgress(index - 1);
-            }
-            else
-            {
-                Console.WriteLine("Invalid input for goal index.");
-            }
-        }
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Test the EternalQuestProgram functionality
+        EternalQuestProgram questProgram = new EternalQuestProgram();
 
-        private static void SaveGoals(GoalManager goalManager)
-        {
-            Console.Write("\nEnter file name to save goals: ");
-            string fileName = Console.ReadLine();
-            goalManager.SaveGoalsToFile(fileName);
-            Console.WriteLine("Goals saved successfully.");
-        }
+        // Add some sample goals
+        questProgram.AddGoal(new SimpleGoal("Run a marathon", 1000));
+        questProgram.AddGoal(new EternalGoal("Read scriptures daily", 100));
+        questProgram.AddGoal(new ChecklistGoal("Attend the temple", 10, 50, 500));
 
-        private static void LoadGoals(GoalManager goalManager)
-        {
-            Console.Write("\nEnter file name to load goals: ");
-            string fileName = Console.ReadLine();
-            goalManager.LoadGoalsFromFile(fileName);
-            Console.WriteLine("Goals loaded successfully.");
-        }
+        // Display goals
+        questProgram.DisplayGoals();
+
+        // Record completion of a goal
+        questProgram.RecordGoalCompletion(0);
+
+        // Display goals after completion
+        questProgram.DisplayGoals();
+
+        // Save goals to a file
+        questProgram.SaveGoalsToFile("goals.txt");
+
+        // Load goals from a file
+        questProgram.LoadGoalsFromFile("goals.txt");
+
+        // Display goals loaded from file
+        questProgram.DisplayGoals();
     }
 }
